@@ -4,6 +4,8 @@ from google.adk.agents.llm_agent import Agent
 from google.adk.tools import google_search
 import os
 from dotenv import load_dotenv
+# from .sub_agent.natacha.agent import natacha_agent
+# from .sub_agent.pascal.agent import pascal_agent
 
 # Load environment variables
 load_dotenv()
@@ -84,6 +86,7 @@ root_agent = Agent(
     description="Agent Koffi best friend",
     instruction=prompt_koffi,
     tools=[google_search],
+    # sub_agents=[natacha_agent, pascal_agent],
 )
 
 # Create ADK middleware agent instance

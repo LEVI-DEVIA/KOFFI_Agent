@@ -5,13 +5,6 @@
   --foreground: #171717;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -23,4 +16,213 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Styles personnalisés pour KOFFI */
+/* St
+yles pour CopilotChat avec apparence personnalisée */
+.koffi-chat-container {
+  --copilot-kit-primary-color: #3b82f6;
+  --copilot-kit-background-color: transparent;
+  --copilot-kit-secondary-color: #374151;
+  --copilot-kit-muted-color: #6b7280;
+  --copilot-kit-text-color: #ffffff;
+}
+
+/* Masquer les éléments indésirables */
+.koffi-chat-container .copilotKitHeader,
+.koffi-chat-container .copilotKitTitle,
+.koffi-chat-container h1,
+.koffi-chat-container h2,
+.koffi-chat-container h3 {
+  display: none !important;
+}
+
+/* Style des messages comme nos bulles */
+.koffi-chat-container .copilotKitMessages {
+  background-color: transparent !important;
+  padding: 2rem 0 !important;
+  max-width: 48rem !important;
+  margin: 0 auto !important;
+}
+
+.koffi-chat-container .copilotKitMessage {
+  margin: 1rem 0 !important;
+  max-width: 70% !important;
+  border-radius: 1rem !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.95rem !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Messages utilisateur (bulles blanches à droite) */
+.koffi-chat-container .copilotKitMessage.copilotKitMessageUser {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+/* Messages bot (bulles grises à gauche) */
+.koffi-chat-container .copilotKitMessage.copilotKitMessageAssistant {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+
+/* Input field arrondi */
+.koffi-chat-container .copilotKitInputContainer {
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  max-width: 32rem !important;
+  margin: 0 auto !important;
+}
+
+.koffi-chat-container .copilotKitInput {
+  background-color: #374151 !important;
+  border: 1px solid #4b5563 !important;
+  border-radius: 2rem !important;
+  color: #ffffff !important;
+  padding: 1rem 1.5rem !important;
+  font-size: 0.95rem !important;
+  width: 100% !important;
+}
+
+.koffi-chat-container .copilotKitInput::placeholder {
+  color: #9ca3af !important;
+}
+
+.koffi-chat-container .copilotKitInput:focus {
+  outline: none !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important;
+}
+
+/* Bouton d'envoi */
+.koffi-chat-container .copilotKitButton {
+  background-color: transparent !important;
+  color: #9ca3af !important;
+  border: none !important;
+  padding: 0.5rem !important;
+  border-radius: 50% !important;
+}
+
+.koffi-chat-container .copilotKitButton:hover {
+  color: #ffffff !important;
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Masquer "Powered by CopilotKit" */
+.koffi-chat-container [class*="powered"],
+.koffi-chat-container [class*="footer"],
+.koffi-chat-container .copilotKitFooter,
+.koffi-chat-container [class*="branding"] {
+  display: none !important;
+}
+
+/* Styl
+es pour CopilotChat avec notre design */
+.koffi-chat-styled {
+  --copilot-kit-primary-color: #3b82f6;
+  --copilot-kit-background-color: transparent;
+  --copilot-kit-secondary-color: #374151;
+  --copilot-kit-muted-color: #6b7280;
+  --copilot-kit-text-color: #ffffff;
+}
+
+/* Masquer les éléments indésirables */
+.koffi-chat-styled .copilotKitHeader,
+.koffi-chat-styled .copilotKitTitle,
+.koffi-chat-styled h1,
+.koffi-chat-styled h2,
+.koffi-chat-styled h3 {
+  display: none !important;
+}
+
+/* Messages comme nos bulles */
+.koffi-chat-styled .copilotKitMessages {
+  background-color: transparent !important;
+  padding: 1rem 0 !important;
+  max-width: 48rem !important;
+  margin: 0 auto !important;
+}
+
+.koffi-chat-styled .copilotKitMessage {
+  margin: 1rem 0 !important;
+  max-width: 70% !important;
+  border-radius: 1rem !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.95rem !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Messages utilisateur - bulles blanches à droite */
+.koffi-chat-styled .copilotKitMessage.copilotKitMessageUser {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+/* Messages bot - bulles grises à gauche */
+.koffi-chat-styled .copilotKitMessage.copilotKitMessageAssistant {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+
+/* Input field arrondi comme le nôtre */
+.koffi-chat-styled .copilotKitInputContainer {
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  max-width: 32rem !important;
+  margin: 0 auto !important;
+}
+
+.koffi-chat-styled .copilotKitInput {
+  background-color: #374151 !important;
+  border: 1px solid #4b5563 !important;
+  border-radius: 2rem !important;
+  color: #ffffff !important;
+  padding: 1rem 1.5rem !important;
+  font-size: 0.95rem !important;
+  width: 100% !important;
+}
+
+.koffi-chat-styled .copilotKitInput::placeholder {
+  color: #9ca3af !important;
+}
+
+.koffi-chat-styled .copilotKitInput:focus {
+  outline: none !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important;
+}
+
+/* Bouton d'envoi */
+.koffi-chat-styled .copilotKitButton {
+  background-color: transparent !important;
+  color: #9ca3af !important;
+  border: none !important;
+  padding: 0.5rem !important;
+  border-radius: 50% !important;
+}
+
+.koffi-chat-styled .copilotKitButton:hover {
+  color: #ffffff !important;
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Masquer "Powered by CopilotKit" */
+.koffi-chat-styled [class*="powered"],
+.koffi-chat-styled [class*="footer"],
+.koffi-chat-styled .copilotKitFooter,
+.koffi-chat-styled [class*="branding"] {
+  display: none !important;
 }

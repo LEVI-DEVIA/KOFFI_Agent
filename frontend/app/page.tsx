@@ -1,16 +1,16 @@
 import "@copilotkit/react-ui/styles.css";
-import { CopilotSidebar } from "@copilotkit/react-ui";
+import { CopilotChat } from "@copilotkit/react-ui";
 
 export default function YourApp() {
-return (
-    <main>
-    <h1>Your main content</h1>
-    <CopilotSidebar
+  return (
+    <div className="h-screen w-screen bg-black">
+      <CopilotChat
         labels={{
-            title: "Popup Assistant",
-            initial: "Hi! I'm connected to an agent. How can I help?",
+          title: "CopilotKit",
+          initial: "Hi you! 👋 I can help you create a presentation on any topic.",
         }}
-    />
-    </main>
-);
+        className="h-full"
+      />
+    </div>
+  );
 }
