@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useVoiceRecording } from "../hooks/useVoiceRecording";
 
 interface Message {
   id: number;
   text: string;
   isBot: boolean;
   timestamp: Date;
+  type?: "text" | "audio";
+  audioUrl?: string;
 }
 
 export default function HomePage() {
@@ -16,11 +19,22 @@ export default function HomePage() {
       text: "Salut moi c'est Koffi, on fait quoi aujourd'hui ?",
       isBot: true,
       timestamp: new Date(),
+      type: "text"
     }
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const {
+    isRecording,
+    isProcessing,
+    startRecording,
+    stopRecording,
+    sendTextMessage,
+    playAudio,
+    textToSpeech,
+  } = useVoiceRecording();
 
   // Auto-scroll vers le dernier message
   useEffect(() => {
@@ -72,6 +86,7 @@ export default function HomePage() {
           text: botResponse,
           isBot: true,
           timestamp: new Date(),
+          type: "text"
         };
 
         setMessages(prev => [...prev, botMessage]);
@@ -83,6 +98,7 @@ export default function HomePage() {
           text: "Désolé, une erreur s'est produite. Vérifiez que votre serveur ADK est démarré sur localhost:8000",
           isBot: true,
           timestamp: new Date(),
+          type: "text"
         };
         setMessages(prev => [...prev, errorMessage]);
       } finally {
@@ -98,6 +114,62 @@ export default function HomePage() {
     }
   };
 
+  const handleVoiceRecording = async () => {
+    if (isRecording) {
+      try {
+        const transcribedText = await stopRecording();
+
+        // Ajouter le message vocal de l'utilisateur avec le texte transcrit
+        const userMessage: Message = {
+          id: Date.now(),
+          text: `🎤 "${transcribedText}"`,
+          isBot: false,
+          timestamp: new Date(),
+          type: "audio"
+        };
+
+        setMessages(prev => [...prev, userMessage]);
+        setIsLoading(true);
+
+        // Envoyer le texte transcrit au backend
+        const response = await sendTextMessage(transcribedText);
+
+        const botMessage: Message = {
+          id: Date.now() + 1,
+          text: response.result,
+          isBot: true,
+          timestamp: new Date(),
+          type: response.type as "text" | "audio",
+          audioUrl: response.audioUrl
+        };
+
+        setMessages(prev => [...prev, botMessage]);
+
+        // La réponse audio est automatiquement jouée par le TTS
+
+      } catch (error) {
+        console.error("Erreur vocal:", error);
+        const errorMessage: Message = {
+          id: Date.now() + 1,
+          text: `Erreur lors du traitement vocal: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
+          isBot: true,
+          timestamp: new Date(),
+          type: "text"
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      try {
+        await startRecording();
+      } catch (error) {
+        console.error("Erreur microphone:", error);
+        alert(`Erreur: ${error instanceof Error ? error.message : 'Impossible de démarrer la reconnaissance vocale'}`);
+      }
+    }
+  };
+
   const clearChat = () => {
     setMessages([
       {
@@ -105,6 +177,7 @@ export default function HomePage() {
         text: "Salut moi c'est Koffi, on fait quoi aujourd'hui ?",
         isBot: true,
         timestamp: new Date(),
+        type: "text"
       }
     ]);
   };
@@ -143,11 +216,25 @@ export default function HomePage() {
               >
                 <div
                   className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${message.isBot
-                      ? "bg-gray-800/80 border border-gray-700 text-white"
-                      : "bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+                    ? "bg-gray-800/80 border border-gray-700 text-white"
+                    : "bg-gradient-to-r from-blue-500 to-purple-600 text-white"
                     } shadow-lg backdrop-blur-sm`}
                 >
                   <div className="whitespace-pre-wrap">{message.text}</div>
+
+                  {/* Bouton de lecture pour les messages audio */}
+                  {message.type === "audio" && message.audioUrl && (
+                    <button
+                      onClick={() => playAudio(message.audioUrl!)}
+                      className="mt-2 flex items-center space-x-2 text-sm opacity-80 hover:opacity-100 transition-opacity"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                      <span>Écouter la réponse</span>
+                    </button>
+                  )}
+
                   <div className={`text-xs mt-2 ${message.isBot ? "text-gray-400" : "text-blue-200"
                     }`}>
                     {message.timestamp.toLocaleTimeString("fr-FR", {
@@ -187,8 +274,33 @@ export default function HomePage() {
               onKeyDown={handleKeyDown}
               placeholder="Posez votre question à Koffi..."
               disabled={isLoading}
-              className="w-full px-6 py-4 bg-gray-800/80 border border-gray-700 rounded-full text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-16 disabled:opacity-50 backdrop-blur-sm shadow-lg"
+              className="w-full px-6 py-4 bg-gray-800/80 border border-gray-700 rounded-full text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-32 disabled:opacity-50 backdrop-blur-sm shadow-lg"
             />
+            {/* Bouton microphone */}
+            <button
+              onClick={handleVoiceRecording}
+              disabled={isLoading || isProcessing}
+              className={`absolute right-16 top-1/2 transform -translate-y-1/2 p-3 rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg ${isRecording
+                ? "bg-red-500 hover:bg-red-600 animate-pulse"
+                : "bg-gray-700 hover:bg-gray-600"
+                } text-white`}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                />
+              </svg>
+            </button>
+
+            {/* Bouton envoyer */}
             <button
               onClick={handleSendMessage}
               disabled={isLoading || !inputValue.trim()}
@@ -210,12 +322,37 @@ export default function HomePage() {
             </button>
           </div>
 
+          {/* Indicateur d'enregistrement */}
+          {isRecording && (
+            <div className="text-center mt-4">
+              <div className="inline-flex items-center space-x-2 text-red-500">
+                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium">Enregistrement en cours... Cliquez à nouveau pour arrêter</span>
+              </div>
+            </div>
+          )}
+
+          {/* Indicateur de traitement */}
+          {isProcessing && (
+            <div className="text-center mt-4">
+              <div className="inline-flex items-center space-x-2 text-blue-500">
+                <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
+                <span className="text-sm font-medium">Traitement du message vocal...</span>
+              </div>
+            </div>
+          )}
+
           {/* Tips */}
-          <div className="text-center mt-4">
-            <p className="text-gray-500 text-sm">
-              Exemple : "Quel est le prix de l'iPhone 15 ?" ou "Qui a gagné la dernière coupe du monde ?"
-            </p>
-          </div>
+          {!isRecording && !isProcessing && (
+            <div className="text-center mt-4">
+              <p className="text-gray-500 text-sm">
+                Tapez votre message ou utilisez le microphone pour parler à Koffi
+              </p>
+              <p className="text-gray-600 text-xs mt-1">
+                Exemple : "Quel est le prix de l'iPhone 15 ?" ou "Qui a gagné la dernière coupe du monde ?"
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

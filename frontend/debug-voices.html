@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Debug Voix Disponibles</title>
+</head>
+
+<body>
+    <h1>Voix disponibles sur ce système</h1>
+    <button onclick="listVoices()">Lister les voix</button>
+    <button onclick="testMaleVoice()">Tester voix masculine</button>
+    <div id="voices"></div>
+
+    <script>
+        function listVoices() {
+            const voices = speechSynthesis.getVoices();
+            const voicesDiv = document.getElementById('voices');
+
+            voicesDiv.innerHTML = '<h2>Toutes les voix:</h2>';
+            voices.forEach((voice, index) => {
+                voicesDiv.innerHTML += `
+                    <div style="margin: 10px; padding: 10px; border: 1px solid #ccc;">
+                        <strong>${index + 1}. ${voice.name}</strong><br>
+                        Langue: ${voice.lang}<br>
+                        Local: ${voice.localService ? 'Oui' : 'Non'}<br>
+                        Default: ${voice.default ? 'Oui' : 'Non'}<br>
+                        <button onclick="testVoice('${voice.name}')">Tester cette voix</button>
+                    </div>
+                `;
+            });
+
+            // Voix françaises seulement
+            const frenchVoices = voices.filter(v => v.lang.startsWith('fr'));
+            voicesDiv.innerHTML += '<h2>Voix françaises uniquement:</h2>';
+            frenchVoices.forEach((voice, index) => {
+                voicesDiv.innerHTML += `
+                    <div style="margin: 10px; padding: 10px; border: 1px solid #00f; background: #f0f8ff;">
+                        <strong>FR ${index + 1}. ${voice.name}</strong><br>
+                        Langue: ${voice.lang}<br>
+                        <button onclick="testVoice('${voice.name}')">Tester</button>
+                    </div>
+                `;
+            });
+        }
+
+        function testVoice(voiceName) {
+            const voices = speechSynthesis.getVoices();
+            const voice = voices.find(v => v.name === voiceName);
+
+            if (voice) {
+                const utterance = new SpeechSynthesisUtterance("Bonjour, je suis Koffi, votre assistant vocal.");
+                utterance.voice = voice;
+                utterance.rate = 0.9;
+                utterance.pitch = 0.8;
+                speechSynthesis.speak(utterance);
+                console.log('Test de la voix:', voice.name);
+            }
+        }
+
+        function testMaleVoice() {
+            const voices = speechSynthesis.getVoices();
+            const frenchVoices = voices.filter(v => v.lang.startsWith('fr'));
+
+            // Chercher des voix potentiellement masculines
+            const maleKeywords = ['thomas', 'pierre', 'male', 'homme', 'masculin', 'david', 'paul', 'marc', 'jean'];
+
+            for (const keyword of maleKeywords) {
+                const voice = frenchVoices.find(v => v.name.toLowerCase().includes(keyword));
+                if (voice) {
+                    console.log('Voix masculine trouvée:', voice.name);
+                    testVoice(voice.name);
+                    return;
+                }
+            }
+
+            // Si pas de voix masculine, tester la première française avec pitch bas
+            if (frenchVoices.length > 0) {
+                console.log('Aucune voix masculine trouvée, test avec pitch bas:', frenchVoices[0].name);
+                const utterance = new SpeechSynthesisUtterance("Bonjour, je suis Koffi avec une voix modifiée.");
+                utterance.voice = frenchVoices[0];
+                utterance.rate = 0.8;
+                utterance.pitch = 0.6; // Très bas
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Charger les voix au démarrage
+        if (speechSynthesis.getVoices().length === 0) {
+            speechSynthesis.onvoiceschanged = listVoices;
+        } else {
+            listVoices();
+        }
+    </script>
+</body>
+
+</html>
