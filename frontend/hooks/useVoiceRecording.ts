@@ -9,7 +9,6 @@ export const useVoiceRecording = () => {
 
     const startRecording = useCallback(async () => {
         try {
-            // Vérifier si l'API Speech Recognition est disponible
             const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
             if (!SpeechRecognition) {
@@ -23,7 +22,6 @@ export const useVoiceRecording = () => {
 
             recognitionRef.current = recognition;
             setIsRecording(true);
-
             recognition.start();
 
         } catch (error) {
@@ -44,14 +42,10 @@ export const useVoiceRecording = () => {
             let finalTranscript = '';
 
             recognition.onresult = (event: any) => {
-                let interimTranscript = '';
-
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
                         finalTranscript += transcript;
-                    } else {
-                        interimTranscript += transcript;
                     }
                 }
             };
@@ -100,7 +94,7 @@ export const useVoiceRecording = () => {
 
             return {
                 result: data.result || "Pas de réponse",
-                type: "audio", // On retourne toujours de l'audio pour les messages vocaux
+                type: "audio",
                 audioUrl
             };
 
@@ -152,8 +146,6 @@ export const useVoiceRecording = () => {
             console.error('Error playing audio:', error);
         });
     }, []);
-
-
 
     return {
         isRecording,

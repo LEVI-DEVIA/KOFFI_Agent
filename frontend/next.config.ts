@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Configuration basique - l'avertissement ngrok est juste informatif
+  // et n'affecte pas le fonctionnement de l'application
 };
 
 export default nextConfig;

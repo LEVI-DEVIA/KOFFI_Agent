@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="brainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea"/>
+      <stop offset="100%" style="stop-color:#764ba2"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Cerveau principal -->
+  <path d="M16 4c-4 0-7 3-7 7 0 1 0.2 2 0.6 2.8-1.2 0.8-2 2.2-2 3.7 0 2.5 2 4.5 4.5 4.5h7.8c2.5 0 4.5-2 4.5-4.5 0-1.5-0.8-2.9-2-3.7 0.4-0.8 0.6-1.8 0.6-2.8 0-4-3-7-7-7z" 
+        fill="url(#brainGradient)"/>
+  
+  <!-- Circonvolutions -->
+  <path d="M10 8c1-0.5 2 0.5 3 0s1-0.5 2 0 1 0.5 2 0 2-0.5 3 0" 
+        fill="none" stroke="#4c51bf" stroke-width="0.8" opacity="0.6"/>
+  <path d="M9 12c1-0.5 2 0.5 3 0s1-0.5 2 0 1 0.5 2 0 1-0.5 2 0 2 0.5 3 0" 
+        fill="none" stroke="#4c51bf" stroke-width="0.8" opacity="0.6"/>
+  <path d="M10 16c1-0.5 2 0.5 3 0s1-0.5 2 0 1 0.5 2 0 2-0.5 3 0" 
+        fill="none" stroke="#4c51bf" stroke-width="0.8" opacity="0.6"/>
+  
+  <!-- Séparation hémisphères -->
+  <line x1="16" y1="6" x2="16" y2="20" stroke="#4c51bf" stroke-width="0.5" opacity="0.4"/>
+  
+  <!-- Tronc cérébral -->
+  <ellipse cx="16" cy="24" rx="2" ry="4" fill="#5a67d8" opacity="0.8"/>
+</svg>
