@@ -68,10 +68,14 @@ export const useVoiceRecording = () => {
         setIsProcessing(true);
 
         try {
+            // Récupérer l'ID de session depuis localStorage
+            const sessionId = localStorage.getItem("koffi-session-id") || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'x-session-id': sessionId, // Inclure l'ID de session
                 },
                 body: JSON.stringify({
                     messages: [

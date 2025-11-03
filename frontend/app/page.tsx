@@ -24,7 +24,20 @@ export default function HomePage() {
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Générer un ID de session unique au chargement
+  useEffect(() => {
+    const storedSessionId = localStorage.getItem("koffi-session-id");
+    if (storedSessionId) {
+      setSessionId(storedSessionId);
+    } else {
+      const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      setSessionId(newSessionId);
+      localStorage.setItem("koffi-session-id", newSessionId);
+    }
+  }, []);
 
   const {
     isRecording,
@@ -60,6 +73,7 @@ export default function HomePage() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "x-session-id": sessionId, // Envoyer l'ID de session
           },
           body: JSON.stringify({
             messages: [
@@ -171,6 +185,12 @@ export default function HomePage() {
   };
 
   const clearChat = () => {
+    // Générer un nouvel ID de session
+    const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    setSessionId(newSessionId);
+    localStorage.setItem("koffi-session-id", newSessionId);
+
+    // Réinitialiser les messages
     setMessages([
       {
         id: 1,

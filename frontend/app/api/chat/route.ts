@@ -24,9 +24,14 @@ export async function POST(req: NextRequest) {
                 adkFormData.append("audio", audioFile);
             }
 
+            // Générer ou récupérer un ID de session unique pour l'audio
+            const sessionId = req.headers.get("x-session-id") || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const userId = sessionId;
+            const threadId = `memory_thread_${userId}`;
+
             // Structure ADK pour l'audio
             const adkPayload = {
-                threadId: `thread_${Date.now()}`,
+                threadId: threadId,
                 runId: `run_${Date.now()}`,
                 state: {},
                 messages: userQuery ? [
@@ -106,8 +111,9 @@ export async function POST(req: NextRequest) {
         const lastMessage = messages[messages.length - 1];
         const userQuery = lastMessage.content;
 
-        // Utiliser un threadId fixe pour maintenir la mémoire
-        const userId = "default_user"; // Tu peux l'extraire des headers ou session
+        // Générer ou récupérer un ID de session unique
+        const sessionId = req.headers.get("x-session-id") || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const userId = sessionId; // Utiliser l'ID de session comme user ID
         const threadId = `memory_thread_${userId}`;
 
         // Structure ADK complète

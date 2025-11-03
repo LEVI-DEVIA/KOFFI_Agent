@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from ag_ui_adk import ADKAgent, add_adk_fastapi_endpoint
 from google.adk.agents.llm_agent import Agent
 from google.adk.tools import google_search
@@ -114,19 +114,37 @@ print(f"💾 Base de données: {db_path}")
 # Créer le service de session avec base de données
 session_service = DatabaseSessionService(db_url=db_url)
 
-# Create ADK middleware agent instance avec mémoire persistante
-adk_agent_sample = ADKAgent(
-    adk_agent=root_agent,
-    app_name="koffi_memory_app",
-    user_id="default_user",
-    session_timeout_seconds=int(os.getenv("SESSION_TIMEOUT_SECONDS", 7200)),
-    session_service=session_service,  # Utiliser le service de base de données
-)
+# Fonction pour créer une instance ADK avec un user_id spécifique
+def create_adk_agent(user_id: str) -> ADKAgent:
+    return ADKAgent(
+        adk_agent=root_agent,
+        app_name="koffi_memory_app",
+        user_id=user_id,
+        session_timeout_seconds=int(os.getenv("SESSION_TIMEOUT_SECONDS", 7200)),
+        session_service=session_service,
+    )
+
+# Instance par défaut
+adk_agent_sample = create_adk_agent("default_user")
 
 # Create FastAPI app
 app = FastAPI(title="Koffi ADK Agent with Memory")
 
-# Add the ADK endpoint
+# Approche simplifiée : modifier l'user_id dynamiquement
+@app.middleware("http")
+async def add_user_session_middleware(request: Request, call_next):
+    # Extraire l'user_id depuis les headers
+    user_id = request.headers.get("x-session-id", "default_user")
+    
+    # Modifier l'user_id de l'agent principal
+    adk_agent_sample.user_id = user_id
+    
+    print(f"🔄 Session utilisateur: {user_id}")
+    
+    response = await call_next(request)
+    return response
+
+# Ajouter l'endpoint ADK principal
 add_adk_fastapi_endpoint(app, adk_agent_sample, path="/")
 
 # Endpoints supplémentaires pour la gestion de la mémoire
@@ -184,7 +202,23 @@ async def memory_status():
         "database_path": db_path,
         "database_url": db_url,
         "session_timeout": os.getenv("SESSION_TIMEOUT_SECONDS", 7200),
-        "memory_service": "active"
+        "memory_service": "active",
+        "active_sessions": list(user_agents_cache.keys()),
+        "total_sessions": len(user_agents_cache)
+    }
+
+@app.get("/sessions")
+async def list_sessions():
+    """Liste des sessions actives"""
+    return {
+        "active_sessions": list(user_agents_cache.keys()),
+        "total_sessions": len(user_agents_cache),
+        "sessions_details": {
+            user_id: {
+                "created": "active",
+                "app_name": agent.app_name
+            } for user_id, agent in user_agents_cache.items()
+        }
     }
 
 # Démarrage du serveur
