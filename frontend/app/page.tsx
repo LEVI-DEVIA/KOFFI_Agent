@@ -191,7 +191,7 @@ export default function HomePage() {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
               KOFFI
             </h1>
-            <p className="text-gray-400 text-sm">Assistant spécialisé en recherche internet</p>
+            <p className="text-gray-400 text-sm">Ton partenaire de la life 😎 </p>
           </div>
           {messages.length > 1 && (
             <button
@@ -349,7 +349,7 @@ export default function HomePage() {
                 Tapez votre message ou utilisez le microphone pour parler à Koffi
               </p>
               <p className="text-gray-600 text-xs mt-1">
-                Exemple : "Quel est le prix de l'iPhone 15 ?" ou "Qui a gagné la dernière coupe du monde ?"
+                Exemple : "Commande moi une pizza sur glovo." ou "Qui a gagné la dernière coupe du monde ?"
               </p>
             </div>
           )}
@@ -357,7 +357,7 @@ export default function HomePage() {
 
         {/* Footer */}
         <div className="text-center pb-4 border-t border-gray-800 pt-4">
-          <p className="text-gray-500 text-sm">Powered by KOFFI ADK</p>
+          <p className="text-gray-500 text-sm">Powered by ASSALE YAO - AI ENGINEER</p>
         </div>
       </div>
     </main>

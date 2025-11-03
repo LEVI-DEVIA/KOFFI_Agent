@@ -1,17 +1,29 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from ag_ui_adk import ADKAgent, add_adk_fastapi_endpoint
 from google.adk.agents.llm_agent import Agent
 from google.adk.tools import google_search
+from google.adk.sessions import DatabaseSessionService
 import os
+import sys
 from dotenv import load_dotenv
-# from .sub_agent.natacha.agent import natacha_agent
-# from .sub_agent.pascal.agent import pascal_agent
+
+# Ajouter le répertoire parent pour les imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from memory_service import memory_service
 
 # Load environment variables
 load_dotenv()
 
 prompt_koffi = """
     You are Koffi, a helpful agent specialized in internet research that delivers precise, up-to-date information.
+    
+    ## Memory and Conversation Context
+    You have persistent memory and can remember previous conversations with users.
+    - Remember important information about users (names, preferences, previous topics)
+    - Reference past conversations naturally: "Comme nous en avons parlé précédemment..."
+    - Build on previous discussions and maintain context
+    - If a user tells you their name, remember it and use it in future conversations
+    - Keep track of topics discussed and user interests
 
     ## Internet Research Operations
     You can perform internet searches using:
@@ -42,16 +54,19 @@ prompt_koffi = """
     - Only the fact/data requested
     - 1-3 sentences maximum
     - Direct and precise
+    - Include personal context if relevant
 
     **Level 2 (when user says "développe", "explique plus", "donne plus de détails")**:
     - Additional context and explanations
     - Examples if relevant
     - 1-2 paragraphs
+    - Reference previous discussions if applicable
 
     **Level 3 (when user asks "analyse complète", "tout savoir sur")**:
     - In-depth analysis
     - Multiple aspects covered
     - Sources and references
+    - Connect to user's interests from past conversations
 
     ## Examples
 
@@ -63,14 +78,13 @@ prompt_koffi = """
     Q: "Quelle est la capitale de la France ?"
     R: "Paris."
 
-    ✅ GOOD (with minimal context if needed):
+    ✅ GOOD (with memory):
+    User: "Je m'appelle Pierre"
+    R: "Enchanté Pierre ! Comment puis-je vous aider aujourd'hui ?"
+    
+    Later conversation:
     Q: "Quel est le prix de l'iPhone 15 ?"
-    [Uses google_search]
-    R: "L'iPhone 15 coûte à partir de 969€ en France (128 Go)."
-
-    Q: "Who won the 2022 World Cup?"
-    [Uses google_search]
-    R: "L'Argentine, en battant la France aux tirs au but (4-2) après un 3-3."
+    R: "Bonjour Pierre ! L'iPhone 15 coûte à partir de 969€ en France (128 Go)."
 
     Important:
     - Be super concise in your responses and only return the information requested (not extra information)
@@ -78,10 +92,11 @@ prompt_koffi = """
     - ALWAYS respond in French
     - NEVER show the raw response from tool outputs. Instead, use the information to answer the question naturally
     - Only expand your answer when the user explicitly requests more details
+    - Use your memory to provide personalized responses and maintain conversation continuity
 """
 
 root_agent = Agent(
-    model="gemini-2.0-flash-exp",
+    model="gemini-2.5-flash-lite-preview-09-2025",
     name="KOFFI",
     description="Agent Koffi best friend",
     instruction=prompt_koffi,
@@ -89,22 +104,104 @@ root_agent = Agent(
     # sub_agents=[natacha_agent, pascal_agent],
 )
 
-# Create ADK middleware agent instance
+# Configuration de la base de données SQLite
+db_path = os.getenv("DATABASE_PATH", "./koffi_memory.db")
+db_url = f"sqlite:///{db_path}"
+
+print(f"🧠 Initialisation de Koffi avec mémoire persistante")
+print(f"💾 Base de données: {db_path}")
+
+# Créer le service de session avec base de données
+session_service = DatabaseSessionService(db_url=db_url)
+
+# Create ADK middleware agent instance avec mémoire persistante
 adk_agent_sample = ADKAgent(
     adk_agent=root_agent,
-    app_name="demo_app",
-    user_id="demo_user",
-    session_timeout_seconds=3600,
-    use_in_memory_services=True
+    app_name="koffi_memory_app",
+    user_id="default_user",
+    session_timeout_seconds=int(os.getenv("SESSION_TIMEOUT_SECONDS", 7200)),
+    session_service=session_service,  # Utiliser le service de base de données
 )
 
 # Create FastAPI app
-app = FastAPI(title="ADK Middleware Sample Agent")
+app = FastAPI(title="Koffi ADK Agent with Memory")
 
 # Add the ADK endpoint
 add_adk_fastapi_endpoint(app, adk_agent_sample, path="/")
 
-# If you want the server to run on invocation, you can do the following:
+# Endpoints supplémentaires pour la gestion de la mémoire
+@app.post("/memory-test")
+async def test_memory():
+    """Test des fonctionnalités de mémoire"""
+    try:
+        session_id = memory_service.get_or_create_session("koffi_memory_app", "test_user")
+        context = memory_service.get_memory_context(session_id)
+        
+        return {
+            "status": "success",
+            "session_id": session_id,
+            "memory_context": context,
+            "message": "Memory service is working"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/add-fact")
+async def add_important_fact(fact: str, user_id: str = "default_user"):
+    """Ajouter un fait important à la mémoire"""
+    try:
+        session_id = memory_service.get_or_create_session("koffi_memory_app", user_id)
+        memory_service.add_important_fact(session_id, fact)
+        
+        return {
+            "status": "success",
+            "message": f"Fait ajouté: {fact}",
+            "session_id": session_id
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/clear-memory")
+async def clear_memory(user_id: str = "default_user"):
+    """Effacer la mémoire d'un utilisateur"""
+    try:
+        session_id = memory_service.get_or_create_session("koffi_memory_app", user_id)
+        memory_service.clear_memory(session_id)
+        
+        return {
+            "status": "success",
+            "message": "Mémoire effacée",
+            "session_id": session_id
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/memory-status")
+async def memory_status():
+    """Statut du système de mémoire"""
+    return {
+        "status": "active",
+        "database_path": db_path,
+        "database_url": db_url,
+        "session_timeout": os.getenv("SESSION_TIMEOUT_SECONDS", 7200),
+        "memory_service": "active"
+    }
+
+# Démarrage du serveur
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="localhost", port=8000)
+    
+    host = os.getenv("HOST", "localhost")
+    port = int(os.getenv("PORT", 8000))
+    
+    print(f"\n🚀 Démarrage de Koffi avec mémoire")
+    print(f"🌐 Serveur: http://{host}:{port}")
+    print(f"📚 Endpoints disponibles:")
+    print(f"  - POST / : Endpoint principal ADK")
+    print(f"  - POST /memory-test : Test de la mémoire")
+    print(f"  - POST /add-fact : Ajouter un fait important")
+    print(f"  - POST /clear-memory : Effacer la mémoire")
+    print(f"  - GET /memory-status : Statut de la mémoire")
+    print(f"\n💡 La base de données SQLite sera créée automatiquement au premier usage")
+    
+    uvicorn.run(app, host=host, port=port)

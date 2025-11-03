@@ -106,9 +106,13 @@ export async function POST(req: NextRequest) {
         const lastMessage = messages[messages.length - 1];
         const userQuery = lastMessage.content;
 
+        // Utiliser un threadId fixe pour maintenir la mémoire
+        const userId = "default_user"; // Tu peux l'extraire des headers ou session
+        const threadId = `memory_thread_${userId}`;
+
         // Structure ADK complète
         const adkPayload = {
-            threadId: `thread_${Date.now()}`,
+            threadId: threadId, // ThreadId fixe pour la mémoire
             runId: `run_${Date.now()}`,
             state: {},
             messages: [
@@ -123,38 +127,59 @@ export async function POST(req: NextRequest) {
             forwardedProps: {}
         };
 
-        // Appel direct au backend ADK
+        // Ajouter un petit délai pour éviter les erreurs de quota
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Appel direct au backend ADK avec timeout plus long
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 secondes
+
         const backendResponse = await fetch("http://localhost:8000/", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(adkPayload),
+            signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
 
         if (!backendResponse.ok) {
             const errorText = await backendResponse.text();
             throw new Error(`Backend responded with status: ${backendResponse.status}, body: ${errorText}`);
         }
 
-        // Le backend retourne un stream, nous devons le traiter
-        const responseText = await backendResponse.text();
-
-        // Parser les lignes de données du stream
-        const lines = responseText.split('\n').filter(line => line.startsWith('data: '));
+        // Traiter le stream correctement
+        const reader = backendResponse.body?.getReader();
+        const decoder = new TextDecoder();
         let assistantResponse = "";
 
-        for (const line of lines) {
+        if (reader) {
             try {
-                const jsonStr = line.replace('data: ', '');
-                const data = JSON.parse(jsonStr);
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
 
-                if (data.type === "TEXT_MESSAGE_CONTENT" && data.delta) {
-                    assistantResponse += data.delta;
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n').filter(line => line.startsWith('data: '));
+
+                    for (const line of lines) {
+                        try {
+                            const jsonStr = line.replace('data: ', '');
+                            const data = JSON.parse(jsonStr);
+
+                            if (data.type === "TEXT_MESSAGE_CONTENT" && data.delta) {
+                                assistantResponse += data.delta;
+                            }
+                        } catch (e) {
+                            // Ignorer les lignes malformées
+                            continue;
+                        }
+                    }
                 }
-            } catch (e) {
-                // Ignorer les lignes qui ne sont pas du JSON valide
-                continue;
+            } finally {
+                reader.releaseLock();
             }
         }
 
