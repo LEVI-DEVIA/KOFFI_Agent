@@ -226,3 +226,116 @@ es pour CopilotChat avec notre design */
 .koffi-chat-styled [class*="branding"] {
   display: none !important;
 }
+
+/* Styles pour le rendu Markdown dans les messages */
+.prose {
+  max-width: 100%;
+}
+
+.prose code {
+  background-color: rgba(55, 65, 81, 0.5);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.875em;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.prose pre {
+  background-color: #1f2937;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+
+.prose pre code {
+  background-color: transparent;
+  padding: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.prose p {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.prose ul, .prose ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.prose li {
+  margin: 0.25rem 0;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.prose strong {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.prose a {
+  color: #60a5fa;
+  text-decoration: none;
+}
+
+.prose a:hover {
+  text-decoration: underline;
+}
+
+.prose blockquote {
+  border-left: 3px solid #4b5563;
+  padding-left: 1rem;
+  margin: 0.5rem 0;
+  font-style: italic;
+  color: #d1d5db;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+}
+
+.prose th, .prose td {
+  border: 1px solid #4b5563;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.prose th {
+  background-color: #374151;
+  font-weight: 600;
+}
+
+/* Styles pour les formules mathématiques KaTeX */
+.katex {
+  font-size: 1em;
+  color: #ffffff;
+}
+
+.katex-display {
+  margin: 1rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.katex-display > .katex {
+  text-align: center;
+  white-space: normal;
+}
+
+.prose .katex-html {
+  color: #ffffff;
+}
+
+/* Améliorer la lisibilité des formules inline */
+.prose p .katex {
+  margin: 0 0.2em;
+}

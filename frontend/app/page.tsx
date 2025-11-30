@@ -2,6 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useVoiceRecording } from "../hooks/useVoiceRecording";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import rehypeHighlight from "rehype-highlight";
+import "highlight.js/styles/github-dark.css";
+import "katex/dist/katex.min.css";
 
 interface Message {
   id: number;
@@ -240,7 +247,38 @@ export default function HomePage() {
                     : "bg-gradient-to-r from-blue-500 to-purple-600 text-white"
                     } shadow-lg backdrop-blur-sm`}
                 >
-                  <div className="whitespace-pre-wrap">{message.text}</div>
+                  <div className="prose prose-invert max-w-none prose-sm">
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm, remarkMath]}
+                      rehypePlugins={[rehypeKatex, rehypeHighlight]}
+                      components={{
+                        code({node, className, children, ...props}: any) {
+                          const match = /language-(\w+)/.exec(className || '');
+                          const isCodeBlock = match;
+                          return isCodeBlock ? (
+                            <code className={`${className} block bg-gray-900 p-3 rounded text-xs overflow-x-auto my-2`} {...props}>
+                              {children}
+                            </code>
+                          ) : (
+                            <code className="bg-gray-700 px-1.5 py-0.5 rounded text-sm" {...props}>
+                              {children}
+                            </code>
+                          )
+                        },
+                        p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+                        ul: ({node, ...props}) => <ul className="list-disc ml-4 mb-2" {...props} />,
+                        ol: ({node, ...props}) => <ol className="list-decimal ml-4 mb-2" {...props} />,
+                        li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                        h1: ({node, ...props}) => <h1 className="text-xl font-bold mb-2" {...props} />,
+                        h2: ({node, ...props}) => <h2 className="text-lg font-bold mb-2" {...props} />,
+                        h3: ({node, ...props}) => <h3 className="text-base font-bold mb-1" {...props} />,
+                        strong: ({node, ...props}) => <strong className="font-bold text-white" {...props} />,
+                        a: ({node, ...props}) => <a className="text-blue-400 hover:underline" {...props} />,
+                      }}
+                    >
+                      {message.text}
+                    </ReactMarkdown>
+                  </div>
 
                   {/* Bouton de lecture pour les messages audio */}
                   {message.type === "audio" && message.audioUrl && (
@@ -376,8 +414,8 @@ export default function HomePage() {
         </div>
 
         {/* Footer */}
-        <div className="text-center pb-4 border-t border-gray-800 pt-4">
-          <p className="text-gray-500 text-sm">Powered by ASSALE YAO - AI ENGINEER</p>
+        <div className="text-center py-2 border-t border-gray-800 mt-2">
+          <p className="text-gray-500 text-xs">Powered by ASSALE YAO - AI ENGINEER</p>
         </div>
       </div>
     </main>

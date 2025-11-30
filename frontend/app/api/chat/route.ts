@@ -49,7 +49,8 @@ export async function POST(req: NextRequest) {
             adkFormData.append("data", JSON.stringify(adkPayload));
 
             // Appel au backend ADK avec audio
-            const backendResponse = await fetch("http://localhost:8000/", {
+            const backendUrl = (process.env.BACKEND_URL || "http://localhost:8000") + "/chat";
+            const backendResponse = await fetch(backendUrl, {
                 method: "POST",
                 body: adkFormData,
             });
@@ -59,42 +60,17 @@ export async function POST(req: NextRequest) {
                 throw new Error(`Backend responded with status: ${backendResponse.status}, body: ${errorText}`);
             }
 
-            // Vérifier si la réponse est de l'audio
-            const responseContentType = backendResponse.headers.get("content-type");
+            // Handle the JSON response from FastAPI
+            const responseData = await backendResponse.json();
 
-            if (responseContentType?.includes("audio/")) {
-                // Retourner l'audio directement
-                const audioBuffer = await backendResponse.arrayBuffer();
-                return new NextResponse(audioBuffer, {
-                    headers: {
-                        "Content-Type": responseContentType,
-                        "Content-Length": audioBuffer.byteLength.toString(),
-                    },
-                });
-            } else {
-                // Traiter comme une réponse texte streamée
-                const responseText = await backendResponse.text();
-                const lines = responseText.split('\n').filter(line => line.startsWith('data: '));
-                let assistantResponse = "";
-
-                for (const line of lines) {
-                    try {
-                        const jsonStr = line.replace('data: ', '');
-                        const data = JSON.parse(jsonStr);
-
-                        if (data.type === "TEXT_MESSAGE_CONTENT" && data.delta) {
-                            assistantResponse += data.delta;
-                        }
-                    } catch (e) {
-                        continue;
-                    }
-                }
-
-                return NextResponse.json({
-                    result: assistantResponse || "Désolé, je n'ai pas pu traiter votre demande.",
-                    type: "text"
-                });
+            if (!responseData.message || !responseData.message.content) {
+                throw new Error('Invalid response format from backend');
             }
+
+            return NextResponse.json({
+                result: responseData.message.content,
+                type: "text"
+            });
         }
 
         // Gestion des requêtes texte (code existant)
@@ -139,8 +115,9 @@ export async function POST(req: NextRequest) {
         // Appel direct au backend ADK avec timeout plus long
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 secondes
+        const backendUrl = (process.env.BACKEND_URL || "http://localhost:8000") + "/chat";
 
-        const backendResponse = await fetch("http://localhost:8000/", {
+        const backendResponse = await fetch(backendUrl, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -156,45 +133,15 @@ export async function POST(req: NextRequest) {
             throw new Error(`Backend responded with status: ${backendResponse.status}, body: ${errorText}`);
         }
 
-        // Traiter le stream correctement
-        const reader = backendResponse.body?.getReader();
-        const decoder = new TextDecoder();
-        let assistantResponse = "";
+        // Handle the JSON response from FastAPI
+        const responseData = await backendResponse.json();
 
-        if (reader) {
-            try {
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    const chunk = decoder.decode(value, { stream: true });
-                    const lines = chunk.split('\n').filter(line => line.startsWith('data: '));
-
-                    for (const line of lines) {
-                        try {
-                            const jsonStr = line.replace('data: ', '');
-                            const data = JSON.parse(jsonStr);
-
-                            if (data.type === "TEXT_MESSAGE_CONTENT" && data.delta) {
-                                assistantResponse += data.delta;
-                            }
-                        } catch (e) {
-                            // Ignorer les lignes malformées
-                            continue;
-                        }
-                    }
-                }
-            } finally {
-                reader.releaseLock();
-            }
-        }
-
-        if (!assistantResponse) {
-            assistantResponse = "Désolé, je n'ai pas pu traiter votre demande.";
+        if (!responseData.message || !responseData.message.content) {
+            throw new Error('Invalid response format from backend');
         }
 
         return NextResponse.json({
-            result: assistantResponse,
+            result: responseData.message.content,
             type: "text"
         });
 
