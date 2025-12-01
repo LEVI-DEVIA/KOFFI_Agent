@@ -9,24 +9,51 @@ export const useVoiceRecording = () => {
 
     const startRecording = useCallback(async () => {
         try {
+            // Vérifier si on est dans un navigateur
+            if (typeof window === 'undefined') {
+                throw new Error('Non disponible côté serveur');
+            }
+
+            // Essayer d'obtenir l'API SpeechRecognition
             const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
             if (!SpeechRecognition) {
-                throw new Error('La reconnaissance vocale n\'est pas supportée par ce navigateur');
+                throw new Error(
+                    'La reconnaissance vocale n\'est pas supportée par ce navigateur.\n\n' +
+                    'Navigateurs supportés:\n' +
+                    '- Chrome/Edge (recommandé)\n' +
+                    '- Safari sur iOS/macOS\n\n' +
+                    'Note: Firefox ne supporte pas cette fonctionnalité.'
+                );
+            }
+
+            // Vérifier les permissions du microphone
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop()); // Arrêter immédiatement
+            } catch (permError) {
+                throw new Error(
+                    'Accès au microphone refusé.\n\n' +
+                    'Veuillez autoriser l\'accès au microphone dans les paramètres de votre navigateur.'
+                );
             }
 
             const recognition = new SpeechRecognition();
             recognition.continuous = true;
             recognition.interimResults = true;
             recognition.lang = 'fr-FR';
+            recognition.maxAlternatives = 1;
 
             recognitionRef.current = recognition;
             setIsRecording(true);
+
             recognition.start();
+            console.log('🎤 Reconnaissance vocale démarrée');
 
         } catch (error) {
             console.error('Error starting recording:', error);
-            throw new Error('Impossible de démarrer la reconnaissance vocale');
+            setIsRecording(false);
+            throw error;
         }
     }, []);
 
@@ -35,32 +62,70 @@ export const useVoiceRecording = () => {
             const recognition = recognitionRef.current;
 
             if (!recognition) {
-                reject(new Error('No active recognition'));
+                setIsRecording(false);
+                reject(new Error('Aucune reconnaissance active'));
                 return;
             }
 
             let finalTranscript = '';
+            let hasResult = false;
 
             recognition.onresult = (event: any) => {
+                hasResult = true;
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
-                        finalTranscript += transcript;
+                        finalTranscript += transcript + ' ';
                     }
                 }
+                console.log('📝 Transcription:', finalTranscript);
             };
 
             recognition.onend = () => {
                 setIsRecording(false);
-                resolve(finalTranscript || 'Aucun texte reconnu');
+                recognitionRef.current = null;
+
+                if (!hasResult || !finalTranscript.trim()) {
+                    reject(new Error('Aucun texte reconnu. Veuillez réessayer en parlant plus clairement.'));
+                } else {
+                    console.log('✅ Reconnaissance terminée:', finalTranscript.trim());
+                    resolve(finalTranscript.trim());
+                }
             };
 
             recognition.onerror = (event: any) => {
                 setIsRecording(false);
-                reject(new Error('Erreur de reconnaissance vocale: ' + event.error));
+                recognitionRef.current = null;
+
+                let errorMessage = 'Erreur de reconnaissance vocale';
+                switch (event.error) {
+                    case 'no-speech':
+                        errorMessage = 'Aucune parole détectée. Veuillez réessayer.';
+                        break;
+                    case 'audio-capture':
+                        errorMessage = 'Microphone non disponible.';
+                        break;
+                    case 'not-allowed':
+                        errorMessage = 'Permission microphone refusée.';
+                        break;
+                    case 'network':
+                        errorMessage = 'Erreur réseau. Vérifiez votre connexion.';
+                        break;
+                    default:
+                        errorMessage = `Erreur: ${event.error}`;
+                }
+
+                console.error('❌ Erreur reconnaissance:', event.error);
+                reject(new Error(errorMessage));
             };
 
-            recognition.stop();
+            try {
+                recognition.stop();
+            } catch (error) {
+                setIsRecording(false);
+                recognitionRef.current = null;
+                reject(new Error('Erreur lors de l\'arrêt de la reconnaissance'));
+            }
         });
     }, []);
 
