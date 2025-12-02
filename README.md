@@ -1,15 +1,18 @@
 # KOFFI Agent 🤖
 
-Agent intelligent spécialisé dans la recherche internet qui délivre des informations précises et à jour, toujours en français.
+Agent intelligent avec reconnaissance vocale et synthèse vocale, spécialisé dans la recherche internet et la conversation naturelle en français.
 
 ## 📋 Description
 
-KOFFI est un agent conversationnel basé sur Google ADK (Agent Development Kit) et Gemini 2.0, avec une interface utilisateur moderne construite avec Next.js et CopilotKit. L'agent est capable de :
+KOFFI est un agent conversationnel moderne basé sur LangGraph et Gemini 2.5, avec une interface Next.js élégante. L'agent est capable de :
 
-- 🔍 Effectuer des recherches internet en temps réel
-- 💬 Répondre de manière concise et précise
+- 🔍 Effectuer des recherches internet en temps réel (via agent_pascal)
+- 🎤 Comprendre les questions vocales (Speech-to-Text)
+- 🔊 Répondre en audio (Text-to-Speech)
+- 💬 Converser de manière naturelle avec streaming
+- 🧠 Mémoriser les conversations (mémoire persistante)
 - 🇫🇷 Communiquer exclusivement en français
-- 🎯 Adapter le niveau de détail selon les besoins
+- 🎯 Déléguer intelligemment aux sous-agents
 
 ## 🏗️ Architecture
 
@@ -24,113 +27,129 @@ KOFFI_Agent/
 
 ### Backend
 - **Framework** : FastAPI
-- **Agent** : Google ADK avec Gemini 2.0 Flash
-- **Outils** : Google Search
+- **Agent** : LangGraph + DeepAgents
+- **LLM** : Gemini 2.5 Flash
+- **Recherche** : Tavily API
+- **Mémoire** : SQLite + AsyncSqliteSaver
 - **Port** : 8000
 
 ### Frontend
 - **Framework** : Next.js 16 (App Router)
-- **UI** : CopilotKit + Tailwind CSS
+- **UI** : Tailwind CSS + React Markdown
+- **Audio** : Web Speech API (STT + TTS)
 - **Port** : 3000
 
-## 🚀 Installation
+## 🚀 Installation Rapide
+
+Voir le [Guide de Démarrage Complet](GUIDE_DEMARRAGE.md) pour plus de détails.
 
 ### Prérequis
 
-- Python 3.10+
+- Python 3.12+
 - Node.js 18+
 - npm ou yarn
-- Compte Google Cloud avec API activées
+- Clés API : Gemini, Tavily
 
-### 1. Configuration du Backend
+### 1. Backend
 
 ```bash
 cd backend
-
-# Créer un environnement virtuel
-python -m venv venv
-source venv/bin/activate  # Sur Windows: venv\Scripts\activate
-
-# Installer les dépendances
-pip install -r requirements.txt
-
-# Configurer les variables d'environnement
-cp .env.example .env
-# Éditer .env avec vos clés API
+./run.sh  # Installation et démarrage automatiques
 ```
 
-### 2. Configuration du Frontend
+### 2. Frontend
 
 ```bash
 cd frontend
-
-# Installer les dépendances
 npm install
-
-# Le frontend se connecte automatiquement au backend sur localhost:8000
+npm run dev
 ```
 
 ## 🎮 Utilisation
 
-### Démarrer le Backend
+### Accès
+- **Frontend** : http://localhost:3000
+- **Backend API** : http://localhost:8000
+- **Documentation API** : http://localhost:8000/docs
 
-```bash
-cd backend
-make run
-# ou
-adk web
-```
+### Fonctionnalités Audio
 
-Le serveur démarre sur `http://localhost:8000`
+#### 🎤 Reconnaissance Vocale
+1. Clique sur le bouton microphone
+2. Parle en français
+3. Clique à nouveau pour arrêter
+4. Ta question est transcrite automatiquement
 
-### Démarrer le Frontend
+#### 🔊 Synthèse Vocale
+- **Question vocale** → Koffi répond en audio
+- **Question texte** → Koffi répond en texte
+- Bouton "Arrêter" pour stopper la lecture
 
-```bash
-cd frontend
-npm run dev
-```
-
-L'interface est accessible sur `http://localhost:3000`
+Voir [Documentation Audio](frontend/AUDIO_FEATURES.md) pour plus de détails.
 
 ## 📝 Configuration
 
-### Variables d'environnement (Backend)
-
-Créez un fichier `.env` dans le dossier `backend/` :
-
+### Backend (.env)
 ```env
-GOOGLE_API_KEY=votre_clé_api_google
-# Ajoutez d'autres variables selon vos besoins
+GEMINI_API_KEY=votre_clé_gemini
+TAVILY_API_KEY=votre_clé_tavily
+HOST=0.0.0.0
+PORT=8000
+MODEL_NAME=gemini-2.5-flash
+```
+
+### Frontend (.env.local)
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
 ## 🧪 Tests
 
+### Backend
 ```bash
 cd backend
-pytest tests/
+python test_structure.py  # Test de la structure
+curl http://localhost:8000/health  # Test de santé
+```
+
+### Frontend
+```bash
+cd frontend
+npm run build  # Test de compilation
 ```
 
 ## 📚 Documentation
 
-- [Documentation Backend](./backend/README.md)
-- [Documentation Frontend](./frontend/README.md)
-- [Notebooks de développement](./docs/)
+- [Guide de Démarrage](GUIDE_DEMARRAGE.md) - Installation et utilisation
+- [Backend README](backend/README.md) - Documentation backend
+- [Structure Backend](backend/STRUCTURE_FINALE.md) - Architecture détaillée
+- [Commandes Backend](backend/COMMANDES.md) - Commandes utiles
+- [Fonctionnalités Audio](frontend/AUDIO_FEATURES.md) - Guide audio complet
+- [Changelog Audio](CHANGELOG_AUDIO.md) - Historique des fonctionnalités
 
 ## 🛠️ Développement
 
-### Structure du code
+### Structure Modulaire
 
-- `backend/koffi/agent.py` : Configuration de l'agent KOFFI
-- `frontend/app/` : Pages et composants Next.js
-- `frontend/app/api/copilotkit/` : Route API pour la connexion agent
-
-### Commandes utiles (Backend)
-
-```bash
-make install-packages  # Installer les dépendances
-make run              # Lancer le serveur
-make save             # Sauvegarder les dépendances
 ```
+backend/
+├── agents/          # Agents IA (koffi + pascal)
+├── api/             # Routes et modèles FastAPI
+├── config/          # Configuration centralisée
+├── services/        # Services (mémoire, recherche)
+├── utils/           # Utilitaires
+└── main.py          # Point d'entrée
+
+frontend/
+├── app/             # Pages Next.js
+├── hooks/           # Hooks React (audio, voice)
+└── public/          # Assets statiques
+```
+
+### Agents
+
+- **koffi_agent** : Agent orchestrateur principal
+- **agent_pascal** : Spécialiste recherche web (Tavily)
 
 ## 🤝 Contribution
 
@@ -140,10 +159,37 @@ Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou un
 
 Voir le fichier [LICENSE](./backend/LICENSE)
 
+## ✨ Fonctionnalités Principales
+
+- ✅ Chat avec streaming en temps réel
+- ✅ Reconnaissance vocale (Speech-to-Text)
+- ✅ Synthèse vocale (Text-to-Speech)
+- ✅ Mémoire persistante entre sessions
+- ✅ Recherche web automatique
+- ✅ Délégation intelligente aux sous-agents
+- ✅ Interface moderne et responsive
+- ✅ Support Markdown avec coloration syntaxique
+
+## 🌐 Compatibilité
+
+### Navigateurs
+- ✅ Chrome / Edge (Recommandé)
+- ✅ Safari
+- ✅ Firefox
+
+### Systèmes
+- ✅ Windows 10/11
+- ✅ macOS 13+
+- ✅ Linux (Ubuntu 22.04+)
+
 ## 👤 Auteur
 
-Levi - KOFFI Agent Project
+**ASSALE YAO** - AI Engineer
+
+## 📄 Licence
+
+Voir le fichier [LICENSE](backend/LICENSE)
 
 ---
 
-**Note** : Ce projet utilise Google ADK et nécessite des clés API Google Cloud valides pour fonctionner.
+**Note** : Ce projet utilise Gemini 2.5 Flash et Tavily API. Des clés API valides sont nécessaires pour fonctionner.

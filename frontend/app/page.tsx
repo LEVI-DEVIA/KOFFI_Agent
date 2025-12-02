@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useVoiceRecording } from "../hooks/useVoiceRecording";
+import { useTextToSpeech } from "../hooks/useTextToSpeech";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -17,6 +18,7 @@ interface Message {
   timestamp: Date;
   type?: "text" | "audio";
   audioUrl?: string;
+  wasVoiceQuestion?: boolean; // Pour savoir si c'était une réponse à une question vocale
 }
 
 export default function HomePage() {
@@ -34,6 +36,7 @@ export default function HomePage() {
   const [sessionId, setSessionId] = useState<string>("");
   const [streamingMessage, setStreamingMessage] = useState<string>("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [lastMessageWasVoice, setLastMessageWasVoice] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -41,9 +44,25 @@ export default function HomePage() {
     isProcessing,
     startRecording,
     stopRecording,
-    sendTextMessage,
     playAudio,
   } = useVoiceRecording();
+
+  const { speak, stop: stopSpeaking, isSpeaking } = useTextToSpeech();
+
+  // Fonction pour nettoyer le texte avant la lecture audio
+  const cleanTextForSpeech = (text: string): string => {
+    return text
+      .replace(/\*\*/g, '')  // Enlever les ** (gras)
+      .replace(/\*/g, '')    // Enlever les * (italique)
+      .replace(/#{1,6}\s/g, '')  // Enlever les # (titres)
+      .replace(/`{1,3}[^`]*`{1,3}/g, 'code')  // Remplacer le code par "code"
+      .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')  // Garder juste le texte des liens
+      .replace(/>\s/g, '')  // Enlever les > (citations)
+      .replace(/[-*+]\s/g, '')  // Enlever les puces de liste
+      .replace(/\d+\.\s/g, '')  // Enlever les numéros de liste
+      .replace(/\n{3,}/g, '\n\n')  // Réduire les sauts de ligne multiples
+      .trim();
+  };
 
   useEffect(() => {
     const storedSessionId = localStorage.getItem("koffi-session-id");
@@ -62,6 +81,9 @@ export default function HomePage() {
 
   const handleSendMessage = async () => {
     if (inputValue.trim() && !isLoading) {
+      // Arrêter toute lecture audio en cours
+      stopSpeaking();
+
       const userMessage: Message = {
         id: Date.now(),
         text: inputValue.trim(),
@@ -74,6 +96,7 @@ export default function HomePage() {
       setInputValue("");
       setStreamingMessage("");
       setIsStreaming(false);  // Pas encore en streaming
+      setLastMessageWasVoice(false);  // Message texte, pas de TTS
 
       try {
         const response = await fetch("/api/chat", {
@@ -198,6 +221,7 @@ export default function HomePage() {
         setIsLoading(true);  // Affiche "Koffi réfléchit..."
         setStreamingMessage("");
         setIsStreaming(false);  // Pas encore en streaming
+        setLastMessageWasVoice(true);  // Message vocal, activer le TTS pour la réponse
 
         const response = await fetch("/api/chat", {
           method: "POST",
@@ -263,11 +287,19 @@ export default function HomePage() {
                     text: fullResponse,
                     isBot: true,
                     timestamp: new Date(),
-                    type: "text"
+                    type: "text",
+                    wasVoiceQuestion: true  // Marquer que c'était une réponse à une question vocale
                   };
 
                   setMessages(prev => [...prev, botMessage]);
                   setStreamingMessage("");
+
+                  // Lire la réponse en audio puisque la question était vocale
+                  if (fullResponse) {
+                    const cleanText = cleanTextForSpeech(fullResponse);
+                    console.log('🔊 Lecture audio automatique:', cleanText.substring(0, 100) + '...');
+                    speak(cleanText);
+                  }
 
                 } else if (data.type === 'error') {
                   throw new Error(data.error);
@@ -296,6 +328,8 @@ export default function HomePage() {
       }
     } else {
       try {
+        // Arrêter toute lecture audio en cours avant de commencer l'enregistrement
+        stopSpeaking();
         await startRecording();
       } catch (error) {
         console.error("Erreur microphone:", error);
@@ -386,39 +420,56 @@ export default function HomePage() {
                             </code>
                           )
                         },
-                        p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
-                        ul: ({ node, ...props }) => <ul className="list-disc ml-4 mb-2" {...props} />,
-                        ol: ({ node, ...props }) => <ol className="list-decimal ml-4 mb-2" {...props} />,
-                        li: ({ node, ...props }) => <li className="mb-1" {...props} />,
-                        h1: ({ node, ...props }) => <h1 className="text-xl font-bold mb-2" {...props} />,
-                        h2: ({ node, ...props }) => <h2 className="text-lg font-bold mb-2" {...props} />,
-                        h3: ({ node, ...props }) => <h3 className="text-base font-bold mb-1" {...props} />,
+                        p: ({ node, ...props }) => <p className="mb-2 last:mb-0 leading-relaxed" {...props} />,
+                        ul: ({ node, ...props }) => <ul className="list-disc ml-4 mb-2 space-y-1" {...props} />,
+                        ol: ({ node, ...props }) => <ol className="list-decimal ml-4 mb-2 space-y-1" {...props} />,
+                        li: ({ node, ...props }) => <li className="mb-1 leading-relaxed" {...props} />,
+                        h1: ({ node, ...props }) => <h1 className="text-xl font-bold mb-3 mt-2" {...props} />,
+                        h2: ({ node, ...props }) => <h2 className="text-lg font-bold mb-2 mt-2" {...props} />,
+                        h3: ({ node, ...props }) => <h3 className="text-base font-bold mb-2 mt-1" {...props} />,
                         strong: ({ node, ...props }) => <strong className="font-bold text-white" {...props} />,
                         a: ({ node, ...props }) => <a className="text-blue-400 hover:underline" {...props} />,
+                        blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-gray-600 pl-3 italic my-2" {...props} />,
                       }}
                     >
                       {message.text}
                     </ReactMarkdown>
                   </div>
 
-                  {message.type === "audio" && message.audioUrl && (
+                  {/* Bouton play pour réécouter les réponses aux questions vocales */}
+                  {message.isBot && message.wasVoiceQuestion && (
                     <button
-                      onClick={() => playAudio(message.audioUrl!)}
-                      className="mt-2 flex items-center space-x-2 text-sm opacity-80 hover:opacity-100 transition-opacity"
+                      onClick={() => {
+                        const cleanText = cleanTextForSpeech(message.text);
+                        speak(cleanText);
+                      }}
+                      className="mt-3 flex items-center space-x-2 text-sm text-green-400 hover:text-green-300 transition-colors"
+                      title="Réécouter la réponse"
                     >
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M8 5v14l11-7z" />
                       </svg>
-                      <span>Écouter la réponse</span>
+                      <span>Réécouter</span>
                     </button>
                   )}
 
-                  <div className={`text-xs mt-2 ${message.isBot ? "text-gray-400" : "text-blue-200"
+                  <div className={`text-xs mt-2 flex items-center justify-between ${message.isBot ? "text-gray-400" : "text-blue-200"
                     }`}>
-                    {message.timestamp.toLocaleTimeString("fr-FR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    <span>
+                      {message.timestamp.toLocaleTimeString("fr-FR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                    {message.isBot && message.wasVoiceQuestion && (
+                      <span className="text-green-500 text-xs flex items-center space-x-1">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+                          <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+                        </svg>
+                        <span>Audio</span>
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -547,7 +598,24 @@ export default function HomePage() {
             </button>
           </div>
 
-          {isRecording && (
+          {isSpeaking && (
+            <div className="text-center mt-4">
+              <div className="inline-flex items-center space-x-3">
+                <div className="flex items-center space-x-2 text-green-500">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium">🔊 Koffi parle...</span>
+                </div>
+                <button
+                  onClick={stopSpeaking}
+                  className="px-3 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors"
+                >
+                  Arrêter
+                </button>
+              </div>
+            </div>
+          )}
+
+          {isRecording && !isSpeaking && (
             <div className="text-center mt-4">
               <div className="inline-flex items-center space-x-2 text-red-500">
                 <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
@@ -556,7 +624,7 @@ export default function HomePage() {
             </div>
           )}
 
-          {isProcessing && (
+          {isProcessing && !isSpeaking && (
             <div className="text-center mt-4">
               <div className="inline-flex items-center space-x-2 text-blue-500">
                 <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
@@ -565,7 +633,7 @@ export default function HomePage() {
             </div>
           )}
 
-          {!isRecording && !isProcessing && (
+          {!isRecording && !isProcessing && !isSpeaking && (
             <div className="text-center mt-4">
               <p className="text-gray-500 text-sm">
                 Tapez votre message ou utilisez le microphone pour parler à Koffi
