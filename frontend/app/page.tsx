@@ -47,7 +47,25 @@ export default function HomePage() {
     playAudio,
   } = useVoiceRecording();
 
-  const { speak, stop: stopSpeaking, isSpeaking } = useTextToSpeech();
+  const { speak, stop: stopSpeaking, isSpeaking, listAvailableVoices } = useTextToSpeech();
+
+  // Lister les voix disponibles au chargement (pour debug)
+  useEffect(() => {
+    // Attendre que les voix soient chargées
+    const loadVoices = () => {
+      if (window.speechSynthesis.getVoices().length > 0) {
+        listAvailableVoices();
+      }
+    };
+
+    // Les voix peuvent être chargées de manière asynchrone
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    // Essayer de charger immédiatement aussi
+    loadVoices();
+  }, [listAvailableVoices]);
 
   // Fonction pour nettoyer le texte avant la lecture audio
   const cleanTextForSpeech = (text: string): string => {

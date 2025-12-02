@@ -37,10 +37,10 @@ PORT = int(os.getenv("PORT", 8000))
 MODEL_NAME = os.getenv(
     "MODEL_NAME", "gemini-2.5-flash"
 )  # Modèle par défaut avec meilleur quota
-TEMPERATURE = 0.7
+TEMPERATURE = 0.5  # Réduit pour des réponses plus rapides et directes
 
 # Session
 SESSION_TIMEOUT_SECONDS = int(os.getenv("SESSION_TIMEOUT_SECONDS", 7200))
 
-# Streaming
-STREAMING_WORD_DELAY = 0.03  # Délai entre les mots en streaming (secondes)
+# Streaming - Optimisé pour réactivité
+STREAMING_WORD_DELAY = 0.01  # Délai entre les mots en streaming (10ms pour plus de réactivité)
