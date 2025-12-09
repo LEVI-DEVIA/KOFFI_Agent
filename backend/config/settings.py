@@ -20,6 +20,7 @@ TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "")
 SERPAPI_API_KEY = os.environ.get("SERPAPI_API_KEY", "")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
 # Database
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
@@ -43,4 +44,6 @@ TEMPERATURE = 0.5  # Réduit pour des réponses plus rapides et directes
 SESSION_TIMEOUT_SECONDS = int(os.getenv("SESSION_TIMEOUT_SECONDS", 7200))
 
 # Streaming - Optimisé pour réactivité
-STREAMING_WORD_DELAY = 0.01  # Délai entre les mots en streaming (10ms pour plus de réactivité)
+STREAMING_WORD_DELAY = (
+    0.01  # Délai entre les mots en streaming (10ms pour plus de réactivité)
+)

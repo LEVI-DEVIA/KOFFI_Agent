@@ -26,6 +26,7 @@ KOFFI_Agent/
 ```
 
 ### Backend
+
 - **Framework** : FastAPI
 - **Agent** : LangGraph + DeepAgents
 - **LLM** : Gemini 2.5 Flash
@@ -34,6 +35,7 @@ KOFFI_Agent/
 - **Port** : 8000
 
 ### Frontend
+
 - **Framework** : Next.js 16 (App Router)
 - **UI** : Tailwind CSS + React Markdown
 - **Audio** : Web Speech API (STT + TTS)
@@ -68,6 +70,7 @@ npm run dev
 ## 🎮 Utilisation
 
 ### Accès
+
 - **Frontend** : http://localhost:3000
 - **Backend API** : http://localhost:8000
 - **Documentation API** : http://localhost:8000/docs
@@ -75,12 +78,14 @@ npm run dev
 ### Fonctionnalités Audio
 
 #### 🎤 Reconnaissance Vocale
+
 1. Clique sur le bouton microphone
 2. Parle en français
 3. Clique à nouveau pour arrêter
 4. Ta question est transcrite automatiquement
 
 #### 🔊 Synthèse Vocale
+
 - **Question vocale** → Koffi répond en audio
 - **Question texte** → Koffi répond en texte
 - Bouton "Arrêter" pour stopper la lecture
@@ -90,6 +95,7 @@ Voir [Documentation Audio](frontend/AUDIO_FEATURES.md) pour plus de détails.
 ## 📝 Configuration
 
 ### Backend (.env)
+
 ```env
 GEMINI_API_KEY=votre_clé_gemini
 TAVILY_API_KEY=votre_clé_tavily
@@ -99,6 +105,7 @@ MODEL_NAME=gemini-2.5-flash
 ```
 
 ### Frontend (.env.local)
+
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
@@ -106,6 +113,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 ## 🧪 Tests
 
 ### Backend
+
 ```bash
 cd backend
 python test_structure.py  # Test de la structure
@@ -113,6 +121,7 @@ curl http://localhost:8000/health  # Test de santé
 ```
 
 ### Frontend
+
 ```bash
 cd frontend
 npm run build  # Test de compilation
@@ -173,11 +182,13 @@ Voir le fichier [LICENSE](./backend/LICENSE)
 ## 🌐 Compatibilité
 
 ### Navigateurs
+
 - ✅ Chrome / Edge (Recommandé)
 - ✅ Safari
 - ✅ Firefox
 
 ### Systèmes
+
 - ✅ Windows 10/11
 - ✅ macOS 13+
 - ✅ Linux (Ubuntu 22.04+)

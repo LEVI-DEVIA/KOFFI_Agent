@@ -1,6 +1,7 @@
 """
 Agent KOFFI - Agent principal orchestrateur
 """
+
 import sys
 import os
 from pathlib import Path
@@ -10,19 +11,21 @@ backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from deepagents import create_deep_agent
 
-from config.settings import GEMINI_API_KEY, MODEL_NAME, TEMPERATURE
+from config.settings import GEMINI_API_KEY, GROQ_API_KEY, MODEL_NAME, TEMPERATURE
 from agents.agent_pascal import get_agent_pascal_config
+from agents.agent_natacha import get_agent_natacha_config
 
 
 def create_koffi_agent(checkpointer):
     """
     Crée et retourne l'agent KOFFI principal
-    
+
     Args:
         checkpointer: Le checkpointer pour la mémoire persistante
-        
+
     Returns:
         Agent KOFFI configuré
     """
@@ -33,6 +36,11 @@ def create_koffi_agent(checkpointer):
             google_api_key=GEMINI_API_KEY,
             temperature=TEMPERATURE,
         )
+        # model = ChatGroq(
+        #     model=MODEL_NAME,
+        #     api_key=GROQ_API_KEY,
+        #     temperature=TEMPERATURE,
+        # )
         print(f"✅ Modèle initialisé: {MODEL_NAME}")
     except Exception as e:
         print(f"⚠️ Erreur avec Gemini: {e}")
@@ -43,18 +51,24 @@ def create_koffi_agent(checkpointer):
             google_api_key=GEMINI_API_KEY,
             temperature=TEMPERATURE,
         )
-    
-    # Obtenir la configuration de agent_pascal
+        # model = ChatGroq(
+        #     model="gemini-2.5-flash",
+        #     api_key=GROQ_API_KEY,
+        #     temperature=TEMPERATURE,
+        # )
+
+    # Obtenir la configuration des agents
     agent_pascal_config = get_agent_pascal_config()
-    
+    agent_natacha_config = get_agent_natacha_config()
+
     # Créer l'agent avec prompt et mémoire
     agent = create_deep_agent(
         model=model,
-        subagents=[agent_pascal_config],
+        subagents=[agent_pascal_config, agent_natacha_config],
         checkpointer=checkpointer,
         system_prompt=get_system_prompt(),
     )
-    
+
     return agent
 
 
@@ -74,27 +88,38 @@ MÉMOIRE:
 - Retiens les noms et préférences
 
 DÉLÉGATION (CRITIQUE):
-- Délègue à agent_pascal pour TOUTE question nécessitant:
-  * Informations récentes (après 2023)
-  * Actualités, news
-  * Recherches web
-  * Données en temps réel
 
-EXEMPLES DE DÉLÉGATION:
-✅ "Dernières news sur l'IA" → DÉLÈGUE à agent_pascal
-✅ "Infos sur iPhone 17" → DÉLÈGUE à agent_pascal
-✅ "Recherche [sujet]" → DÉLÈGUE à agent_pascal
+1. AGENT_PASCAL - Recherche & Informations:
+   - Toute question nécessitant des infos récentes (après 2023)
+   - Actualités, news
+   - Recherches web
+   - Données en temps réel
+   
+   Exemples:
+   ✅ "Dernières news sur l'IA" → DÉLÈGUE à agent_pascal
+   ✅ "Infos sur iPhone 17" → DÉLÈGUE à agent_pascal
+   ✅ "Recherche [sujet]" → DÉLÈGUE à agent_pascal
+
+2. AGENT_NATACHA - Commandes de nourriture:
+   - Toute demande de commande de repas
+   - Recommandations de restaurants
+   - Gestion de livraison de nourriture
+   
+   Exemples:
+   ✅ "Je veux commander une pizza" → DÉLÈGUE à agent_natacha
+   ✅ "Commande-moi un burger" → DÉLÈGUE à agent_natacha
+   ✅ "Trouve-moi un resto de sushi" → DÉLÈGUE à agent_natacha
 
 COMPORTEMENT LORS DE DÉLÉGATION:
-- NE DIS PAS "Je délègue à agent_pascal"
+- NE DIS PAS "Je délègue à agent_X"
 - Délègue silencieusement
-- Laisse agent_pascal répondre seul
+- Laisse l'agent spécialisé répondre seul
 
 RÉPONDS TOI-MÊME SEULEMENT POUR:
 - Salutations ("Bonjour")
 - Questions sur ton identité ("Qui es-tu?")
 - Connaissances générales basiques
 
-POUR TOUT LE RESTE: Délègue à agent_pascal.
+POUR TOUT LE RESTE: Délègue à l'agent approprié.
 
 Réponds en français, naturellement et BRIÈVEMENT."""

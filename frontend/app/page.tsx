@@ -10,6 +10,7 @@ import rehypeKatex from "rehype-katex";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css";
 import "katex/dist/katex.min.css";
+import CookieConsent from "../components/CookieConsent";
 
 interface Message {
   id: number;
@@ -667,6 +668,7 @@ export default function HomePage() {
           <p className="text-gray-500 text-xs">Powered by ASSALE YAO - AI ENGINEER</p>
         </div>
       </div>
+      <CookieConsent />
     </main>
   );
 }

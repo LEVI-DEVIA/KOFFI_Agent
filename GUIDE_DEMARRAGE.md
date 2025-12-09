@@ -77,12 +77,14 @@ npm run dev
 ## 🎤 Fonctionnalités Audio
 
 ### Reconnaissance Vocale (STT)
+
 1. Clique sur le bouton microphone 🎤
 2. Parle en français
 3. Clique à nouveau pour arrêter
 4. Ta question est transcrite automatiquement
 
 ### Synthèse Vocale (TTS)
+
 - **Question vocale** → Koffi répond en audio 🔊
 - **Question texte** → Koffi répond en texte 📝
 - Bouton "Arrêter" pour stopper la lecture
@@ -90,11 +92,13 @@ npm run dev
 ## 🧪 Test Rapide
 
 ### Test Backend
+
 ```bash
 curl http://localhost:8000/health
 ```
 
 ### Test Chat
+
 ```bash
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
@@ -129,6 +133,7 @@ KOFFI_Agent/
 ## 🔑 Variables d'Environnement
 
 ### Backend (.env)
+
 ```env
 GEMINI_API_KEY=votre_clé_gemini
 TAVILY_API_KEY=votre_clé_tavily
@@ -138,6 +143,7 @@ MODEL_NAME=gemini-2.5-flash
 ```
 
 ### Frontend (.env.local)
+
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
@@ -145,16 +151,19 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 ## 🐛 Dépannage
 
 ### Backend ne démarre pas
+
 - Vérifier que le venv est activé
 - Vérifier les clés API dans .env
 - Vérifier que le port 8000 est libre
 
 ### Frontend ne se connecte pas
+
 - Vérifier que le backend est démarré
 - Vérifier l'URL dans .env.local
 - Vérifier la console du navigateur
 
 ### Audio ne fonctionne pas
+
 - Vérifier les permissions du microphone
 - Utiliser Chrome ou Edge
 - Vérifier que le son n'est pas coupé
@@ -169,6 +178,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 ## 🎯 Exemples d'Utilisation
 
 ### Conversation Vocale
+
 ```
 🎤 "Bonjour Koffi, comment vas-tu ?"
 🔊 Koffi répond en audio
@@ -178,12 +188,14 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
 ### Conversation Texte
+
 ```
 ⌨️ "Explique-moi la théorie de la relativité"
 📝 Koffi répond en texte avec formatage Markdown
 ```
 
 ### Conversation Mixte
+
 ```
 ⌨️ "Bonjour"
 📝 Réponse texte
@@ -210,6 +222,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 ## 🆘 Support
 
 En cas de problème :
+
 1. Vérifier les logs du backend
 2. Vérifier la console du navigateur
 3. Consulter la documentation
