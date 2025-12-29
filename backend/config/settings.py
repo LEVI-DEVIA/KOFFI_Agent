@@ -21,7 +21,9 @@ SERPAPI_API_KEY = os.environ.get("SERPAPI_API_KEY", "")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
-
+DEEPSEEK_API = os.environ.get("DEEPSEEK_API", "")
+BYTEZ_API_KEY = os.environ.get("BYTEZ_API_KEY", "")
+ZML_API_KEY = os.environ.get("ZML_API_KEY", "")
 # Database
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 DATABASE_PATH = os.getenv("DATABASE_PATH", os.path.join(DATA_DIR, "koffi_memory.db"))
@@ -35,9 +37,7 @@ PORT = int(os.getenv("PORT", 8000))
 # - gemini-1.5-flash (quota élevé, rapide)
 # - gemini-1.5-pro (quota moyen, plus intelligent)
 # - gemini-2.5-flash (quota faible, expérimental)
-MODEL_NAME = os.getenv(
-    "MODEL_NAME", "gemini-2.5-flash"
-)  # Modèle par défaut avec meilleur quota
+MODEL_NAME = os.getenv("MODEL_NAME", "glm-4.7")  # Modèle par défaut avec meilleur quota
 TEMPERATURE = 0.5  # Réduit pour des réponses plus rapides et directes
 
 # Session

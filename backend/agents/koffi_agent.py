@@ -11,10 +11,11 @@ backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_deepseek import ChatDeepSeek
 from langchain_groq import ChatGroq
 from deepagents import create_deep_agent
 
-from config.settings import GEMINI_API_KEY, GROQ_API_KEY, MODEL_NAME, TEMPERATURE
+from config.settings import GEMINI_API_KEY, GROQ_API_KEY, MODEL_NAME, TEMPERATURE, ZML_API_KEY
 from agents.agent_pascal import get_agent_pascal_config
 from agents.agent_natacha import get_agent_natacha_config
 
@@ -33,7 +34,7 @@ def create_koffi_agent(checkpointer):
     try:
         model = ChatGoogleGenerativeAI(
             model=MODEL_NAME,
-            google_api_key=GEMINI_API_KEY,
+            google_api_key=ZML_API_KEY,
             temperature=TEMPERATURE,
         )
         # model = ChatGroq(

@@ -1,6 +1,7 @@
 """
 KOFFI Agent - Point d'entrée principal
 """
+
 import os
 import sys
 from pathlib import Path
@@ -31,28 +32,28 @@ agent = None
 async def lifespan(app: FastAPI):
     """Gestion du cycle de vie de l'application"""
     global memory_checkpointer, agent
-    
+
     print("🚀 Démarrage de KOFFI Agent API...")
     print(f"💾 Base de données: {DATABASE_PATH}")
-    
+
     # Initialiser le checkpointer asynchrone
     db_path_full = os.path.join(DATA_DIR, os.path.basename(DATABASE_PATH))
-    
+
     # Créer la connexion qui restera ouverte pendant toute la durée de vie de l'app
     conn = await aiosqlite.connect(db_path_full)
     memory_checkpointer = AsyncSqliteSaver(conn)
     await memory_checkpointer.setup()
     print("✅ Checkpointer AsyncSqliteSaver initialisé")
-    
+
     # Créer l'agent
     agent = create_koffi_agent(memory_checkpointer)
     print("✅ Agent KOFFI créé")
-    
+
     # Passer l'agent aux routes
     routes.set_agent(agent)
-    
+
     yield
-    
+
     # Fermer la connexion à l'arrêt
     print("👋 Arrêt de KOFFI Agent API...")
     await conn.close()
@@ -64,7 +65,7 @@ app = FastAPI(
     title="KOFFI Agent API",
     description="API pour l'agent KOFFI avec LangGraph et mémoire persistante",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # Configurer les routes
@@ -73,11 +74,11 @@ routes.setup_routes(app)
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     print(f"\n🚀 Démarrage de Koffi")
     print(f"🌐 Serveur: http://{HOST}:{PORT}")
     print(f"📚 Documentation: http://{HOST}:{PORT}/docs")
-    
+
     uvicorn.run(
         "main:app",
         host=HOST,
