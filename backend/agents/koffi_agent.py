@@ -34,7 +34,7 @@ def create_koffi_agent(checkpointer):
     try:
         model = ChatGoogleGenerativeAI(
             model=MODEL_NAME,
-            google_api_key=ZML_API_KEY,
+            google_api_key=GEMINI_API_KEY,
             temperature=TEMPERATURE,
         )
         # model = ChatGroq(
